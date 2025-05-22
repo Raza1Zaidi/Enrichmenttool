@@ -120,6 +120,7 @@ async def process_domains(domains):
     return names, descriptions
 
 # ========== UI ==========
+import pandas as pd
 st.set_page_config(page_title="Domain Intelligence Extractor", page_icon="🌐", layout="centered")
 st.markdown("""
     <style>
