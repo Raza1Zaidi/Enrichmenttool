@@ -120,30 +120,63 @@ async def process_domains(domains):
     return names, descriptions
 
 # ========== UI ==========
-st.title("Domain Intelligence Extractor")
-st.markdown("Upload a CSV of domains. This app scrapes content, uses Gemini, and shows company names and descriptions.")
+st.set_page_config(page_title="Domain Intelligence Extractor", page_icon="🌐", layout="centered")
+st.markdown("""
+    <style>
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+    .css-1aumxhk {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 2px 2px 15px rgba(0,0,0,0.1);
+    }
+    button {
+        background-color: #007BFF;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
+# App title and instructions
+st.title("🧠 Enrich Real-Time Company Info for any website")
+st.markdown("Upload a `.csv` file with a **`domain`** header.")
+
+# File uploader
+uploaded_file = st.file_uploader("📁 Upload your CSV file here", type=["csv"])
 
 if uploaded_file:
     stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
     reader = csv.reader(stringio)
-    domains = [row[0] for row in reader if row]
+    domains = [row[0] for index, row in enumerate(reader) if row and index != 0]  # Skip header
 
-    if st.button("Process Domains"):
-        names, descriptions = asyncio.run(process_domains(domains))
-        result_data = list(zip(domains, names, descriptions))
+    if st.button("🚀 Start Enrichment"):
+        with st.spinner("Processing domains... this may take a few seconds ⏳"):
+            names, descriptions = asyncio.run(process_domains(domains))
+            result_data = list(zip(domains, names, descriptions))
 
         if result_data:
-            st.success("Processing complete.")
-            st.markdown("### Result")
+            st.success("✅ Enrichment complete!")
+            st.markdown("### 📋 Enriched Data Table")
             st.dataframe(result_data, use_container_width=True)
 
-            # Add Copy to Clipboard Button
+            # Prepare text for clipboard copy
             result_text = "\n".join([f"{d}, {n}, {desc}" for d, n, desc in result_data])
             st.markdown(
                 f"""
-                <button onclick="navigator.clipboard.writeText(`{result_text}`)">📋 Copy to Clipboard</button>
+                <br>
+                <button onclick="navigator.clipboard.writeText(`{result_text}`)">📄 Copy All Results to Clipboard</button>
                 """,
                 unsafe_allow_html=True,
             )
+
+            # Provide download as CSV
+            df = pd.DataFrame(result_data, columns=["Domain", "Company Name", "Description"])
+            csv_output = df.to_csv(index=False).encode('utf-8')
+            st.download_button("📥 Download Results as CSV", csv_output, "enriched_results.csv", "text/csv", key='download-csv')
