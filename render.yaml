@@ -1,12 +1,10 @@
 services:
   - type: web
-    name: company-info-scraper
+    name: company-scraper
     env: python
+    buildCommand: "pip install -r requirements.txt && python -m playwright install"
+    startCommand: "streamlit run app.py --server.port=$PORT"
     plan: free
-    buildCommand: |
-      pip install -r requirements.txt
-      playwright install chromium
-    startCommand: streamlit run app.py
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.10
+      - key: PORT
+        value: 10000
